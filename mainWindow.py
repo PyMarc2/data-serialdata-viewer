@@ -45,6 +45,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         # GRAPHICAL Function connections
         self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
         self.pushButton_Place.clicked.connect(self.placeSensors)
+
         self.resized.connect(self.updateSizePosition)
 
 
@@ -107,7 +108,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
                 try:
                     self.serialComm.close()
                     self.connected = 0
-                    self.threadPool.stop(self.terminalWorker)
+                    #self.threadPool.stop(self.terminalWorker)
                     print("Disconnection from Port %s succeeded." % self.connectedPort)
                     self.pushButton_Connect.setText("Connect")
 
@@ -152,10 +153,13 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.widget_Mpl.canvas.updateSensorNumber(sensors)
 
     def placeSensors(self):
+        self.widget_Mpl.canvas.updateRelativePositions()
         self.widget_Mpl.canvas.placeSensor()
 
     def updateSizePosition(self):
+        self.widget_Mpl.canvas.getActualSensorRelativeSize()
         self.widget_Mpl.canvas.updateSizePosition()
+
 
  # ================= TERMINAL LIKE CONSOLE FOR OUTPUTTING ========== #
 

@@ -2,6 +2,7 @@ import matplotlib
 from matplotlib import patches
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
+import itertools
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 
 
@@ -26,19 +27,19 @@ class MplWidgetHandler(Canvas):
         Canvas.updateGeometry(self)
 
         # SET PROGRAM OPTIONS
-        self.sensorPixelSize = [64., 64.]
+        self.sensorPixelSize = [128., 128.]
         print("Sensor size =", self.sensorPixelSize)
         print(self.getActualCanvasPixelSize())
         self.canvasPossibleSensorAmount()
 
         # SET CLASS VARIABLE INITIALISATION
+        self.canvasSizePixel = []
         self.devicesNumber = 1
         self.devices = []  # [index, name, xPos, yPos, regex]
-        self.plotCount = 0
-        self.currentTime = 0
-        self.timeIncrement = 5  # in seconds
-        self.tickLength = 100 * self.timeIncrement
-        self.maxCount = 0
+        self.relativeSensorSize = []
+        self.xmax = 0
+        self.ymax = 0
+
 
     def addSensor(self):
         self.devices += 1
@@ -49,33 +50,65 @@ class MplWidgetHandler(Canvas):
         self.draw()
 
     def getActualSensorRelativeSize(self):
-        size = self.sensorPixelSize / (self.fig.get_size_inches() * self.fig.dpi)
+        size = self.sensorPixelSize/(self.fig.get_size_inches() * self.fig.dpi)
+        self.relativeSensorSize = size
+        print("Relative size of sensor %f, %f " % (size[0], size[1]))
         return size
 
     def getActualCanvasPixelSize(self):
         size = (self.fig.get_size_inches() * self.fig.dpi)
+        self.canvasSizePixel = size
         return size
 
+    def calculateSensorRelativePosition(self):
+        self.canvasPossibleSensorAmount()
+        self.placedSensor = 0
+        xPositions = []
+        yPositions = []
+        xPlaced = 0
+        yPlaced = 0
+        for xIndex in range(self.xmax):
+            if self.xmax - xPlaced != 0:
+                xPositions.append(0.5*self.sensorPixelSize[0] + 1.5*self.sensorPixelSize[0]*xPlaced)
+                xPlaced = xPlaced +1
+            else:
+                continue
 
+        for yIndex in range(self.ymax):
+            if self.ymax - yPlaced != 0:
+                yPositions.append(0.5*self.sensorPixelSize[0] + 1.5*self.sensorPixelSize[0]*yPlaced)
+                yPlaced = yPlaced +1
+            else:
+                continue
+        print(xPositions, yPositions)
 
-    def calculateSensorParameters(self):
-        pass
+        positionTuples = list(itertools.product(xPositions/self.canvasSizePixel[0], yPositions/self.canvasSizePixel[1]))
+        self.relativePositionsTuples = positionTuples
+        print(positionTuples)
 
     def placeSensor(self):
-        pass
+        self.getActualSensorRelativeSize()
+        self.getActualCanvasPixelSize()
+        self.calculateSensorRelativePosition()
+        for i in self.relativePositionsTuples:
+            self.axes.add_artist(
+            patches.Rectangle((i[0], i[1]), self.relativeSensorSize[0], self.relativeSensorSize[1], edgecolor='black',
+                              facecolor='black', fill=True))
+        self.draw()
 
     def updateSensorNumber(self, number):
         self.devicesNumber = number
         print("The amount of sensors is %i" %number)
 
+    def updateRelativePositions(self):
+        self.calculateSensorRelativePosition()
+
     def canvasPossibleSensorAmount(self):
         canvasSize = self.getActualCanvasPixelSize()
-        xAmount = round(2*canvasSize[0]/(3*self.sensorPixelSize[0]))
-        yAmount = round(2 * canvasSize[1] / (3 * self.sensorPixelSize[1]))
+        self.xmax = xAmount = int(round(2*canvasSize[0]/(3*self.sensorPixelSize[0])))
+        self.ymax = yAmount = int(round(2 * canvasSize[1] / (3 * self.sensorPixelSize[1])))
         print("There can be %f sensor in the X axis" % xAmount)
         print("There can be %f sensor in the Y axis" % yAmount)
-
-
 
     def updateSizePosition(self):
         pass
