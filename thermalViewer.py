@@ -94,6 +94,8 @@ class MplWidgetHandler(Canvas):
             self.axes.add_artist(
             patches.Rectangle((i[0], i[1]), self.relativeSensorSize[0], self.relativeSensorSize[1], edgecolor='black',
                               facecolor='black', fill=True))
+
+        self.fig.subplots_adjust(0, 0, 1, 1)
         self.draw()
 
     def updateSensorNumber(self, number):

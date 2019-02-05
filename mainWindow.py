@@ -1,21 +1,23 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtWidgets
+from PyQt5 import QtGui
+
 from PyQt5.QtCore import QSize, Qt, QTimer, QThreadPool, pyqtSignal, QTime
 from threadWorker import Worker
-import PyQt5.QtCore as QC
+from PyQt5 import QtCore
 from mainWindowUi import Ui_ViewerWidget
-import serial
+import serialMock as serial
 import sys
 import glob
 
 
 class MainWindow(QWidget, Ui_ViewerWidget):
-    resized = QC.pyqtSignal()
+    resized = QtCore.pyqtSignal()
+    writeSignal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-
 
         # VARIABLES declarations
         self.selectedPort = ''
@@ -25,8 +27,8 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
         # INSERT TERMINAL IN MAIN WINDOW
         self.threadPool = QThreadPool()
-        self.terminalWorker = Worker(self.readSerial)
-
+        self.writeSignal.connect(self.writeTerminal)
+        self.terminalWorker = None
         # INITIALIZATION Functions
         self.ports = self.scanPorts()
         self.comboBox_port.addItems(self.ports)
@@ -35,12 +37,13 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.lineEdit_baudrate.textChanged.connect(self.updateBaudrate)
         self.updateBaudrate()
 
+        self.checkBox_Terminal.setChecked(True)
         self.checkBox_Terminal.stateChanged.connect(self.showTerminal)
 
         self.comboBox_port.currentTextChanged.connect(self.updatePort)
         self.updatePort()
 
-        self.pushButton_Connect.clicked.connect(self.initializeCommunication)
+        self.pushButton_Connect.clicked.connect(self.Connect)
 
         # GRAPHICAL Function connections
         self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
@@ -91,51 +94,60 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.selectedPort = portName
         print("Selected Port updated to %s" % self.selectedPort)
 
-    def initializeCommunication(self):
+    def Connect(self):
         try:
-            if self.connected == 0:
+            if not self.connected:
 
                 self.serialComm = serial.Serial(port=self.selectedPort, baudrate=self.baudrate,
                                             bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,
                                             stopbits=serial.STOPBITS_ONE)
                 self.connected = 1
                 self.connectedPort = self.selectedPort
+                self.terminalWorker = Worker(self.readSerial)
                 self.threadPool.start(self.terminalWorker)
                 print("Connection to Port %s succeeded." % self.connectedPort)
                 self.pushButton_Connect.setText("Disconnect")
-
-            else:
-                try:
-                    self.serialComm.close()
-                    self.connected = 0
-                    #self.threadPool.stop(self.terminalWorker)
-                    print("Disconnection from Port %s succeeded." % self.connectedPort)
-                    self.pushButton_Connect.setText("Connect")
-
-                except Exception as e:
-                    print("Error occurred during disconnection form Port %s" % self.connectedPort)
-                    print(e)
+                self.pushButton_Connect.clicked.disconnect()
+                self.pushButton_Connect.clicked.connect(self.Disconnect)
 
         except Exception as e:
             print("\nError occurred during connection initialisation to Port %s." % self.selectedPort)
             print(e)
 
+    def Disconnect(self):
+        if self.connected:
+            try:
+                self.connected = 0
+                self.serialComm.close()
+                print("Disconnection from Port %s succeeded." % self.connectedPort)
+                self.pushButton_Connect.setText("Connect")
+                self.pushButton_Connect.clicked.disconnect()
+                self.pushButton_Connect.clicked.connect(self.Connect)
+
+            except Exception as e:
+                print("Error occurred during disconnection form Port %s" % self.connectedPort)
+                print(e)
+                pass
+
     def readSerial(self, statusSignal=None):
-        print("Serial read initiated")
-        while True:
-            print((self.serialComm.read()))
-            self.write(self.serialComm.read())
-            print((self.serialComm.read()))
+        print("Thread has initiated serial read")
+        while self.connected:
+            data = (str(self.serialComm.read()))
+            # print(data)
+            self.writeSignal.emit(data)
         else:
-            print("caca ici")
+            print("Thread has disconnected")
+            return
 
     def showTerminal(self):
         if self.checkBox_Terminal.isChecked():
             self.terminal.setEnabled(True)
             print("Terminal Opens")
+            self.terminal.setVisible(True)
         else:
             self.terminal.setEnabled(False)
             print("Terminal Closes")
+            self.terminal.setVisible(False)
 
 
 
@@ -163,7 +175,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
  # ================= TERMINAL LIKE CONSOLE FOR OUTPUTTING ========== #
 
-    def write(self, msg, statusSignal=None):
-        self.messageSignal.emit()
+    def writeTerminal(self, msg):
         self.terminal.insertPlainText(msg)
         self.terminal.insertPlainText('\n')
+        self.terminal.moveCursor(QtGui.QTextCursor.End)
