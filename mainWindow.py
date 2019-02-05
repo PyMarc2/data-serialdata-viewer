@@ -19,39 +19,66 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
-        # VARIABLES declarations
+        # VARIABLES DECLARATION
         self.selectedPort = ''
         self.connectedPort = ''
         self.connected = 0
         self.baudrate = 9600
 
+        # INITIALISATION SERIAL COMMUNICATION
+        self.ports = self.scanPorts()
+        self.comboBox_port.addItems(self.ports)
+
         # INSERT TERMINAL IN MAIN WINDOW
         self.threadPool = QThreadPool()
         self.writeSignal.connect(self.writeTerminal)
         self.terminalWorker = None
-        # INITIALIZATION Functions
-        self.ports = self.scanPorts()
-        self.comboBox_port.addItems(self.ports)
 
-        # TERMINAL Function connections
+        # TERMINAL CONNECTIONS
         self.lineEdit_baudrate.textChanged.connect(self.updateBaudrate)
         self.updateBaudrate()
-
-        self.checkBox_Terminal.setChecked(True)
-        self.checkBox_Terminal.stateChanged.connect(self.showTerminal)
+        self.lineEdit_baudrate.returnPressed.connect(self.Connect)
 
         self.comboBox_port.currentTextChanged.connect(self.updatePort)
         self.updatePort()
 
+        self.checkBox_Terminal.setChecked(True)
+        self.checkBox_Terminal.stateChanged.connect(self.showTerminal)
+
         self.pushButton_Connect.clicked.connect(self.Connect)
 
-        # GRAPHICAL Function connections
+        # GRAPHICAL FUNCTIONS SETTINGS
         self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
         self.pushButton_Place.clicked.connect(self.placeSensors)
 
         self.resized.connect(self.updateSizePosition)
 
-
+        # COLOR SELECTION SETTINGS
+        color_dict = {
+            'red': '#ff0000',
+            'green': '#00ff00',
+            'blue': '#0000ff',
+            'yellow': '#ffff00',
+            'gold': '#ffd700',
+            'pink': '#ffc0cb',
+            'bisque': '#ffe4c4',
+            'ivory': '#fffff0',
+            'black': '#000000',
+            'white': '#ffffff',
+            'violet': '#ee82ee',
+            'silver': '#c0c0c0',
+            'forestgreen': '#228b22',
+            'brown': '#a52a3a',
+            'chocolate': '#d2691e',
+            'azure': '#fffff0',
+            'orange': '#ffa500'
+        }
+        self.comboBox_minColor.addItems(color_dict)
+        self.comboBox_maxColor.addItems(color_dict)
+        self.comboBox_minColor.currentTextChanged.connect(self.updateColors)
+        self.comboBox_maxColor.currentTextChanged.connect(self.updateColors)
+        self.lineEdit_minColor.returnPressed.connect(self.updateColors)
+        self.lineEdit_maxColor.returnPressed.connect(self.updateColors)
 
     # =========== TERMINAL FUNCTIONS ============== #
     def scanPorts(self):
@@ -149,10 +176,12 @@ class MainWindow(QWidget, Ui_ViewerWidget):
             print("Terminal Closes")
             self.terminal.setVisible(False)
 
-
+    def writeTerminal(self, msg):
+        self.terminal.insertPlainText(msg)
+        self.terminal.insertPlainText('\n')
+        self.terminal.moveCursor(QtGui.QTextCursor.End)
 
     # =========== GRAPHICAL INTERACTION FUNCTIONS ============== #
-
     def resizeEvent(self, event):
         self.resized.emit()
         return super(MainWindow, self).resizeEvent(event)
@@ -173,9 +202,16 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.widget_Mpl.canvas.updateSizePosition()
 
 
- # ================= TERMINAL LIKE CONSOLE FOR OUTPUTTING ========== #
+    # ============= COLOR SELECTION FUNCTIONS ============ #
+    def updateColors(self):
+        self.min_color = self.comboBox_minColor.currentText()
+        self.max_color = self.comboBox_maxColor.currentText()
+        self.min_color_value = self.lineEdit_minColor.text()
+        self.max_color_value = self.lineEdit_maxColor.text()
+        print("Couleur minimale:%s" % self.min_color)
+        print("Couleur maximale:%s" % self.max_color)
+        print("Valeur minimale:%s" % self.min_color_value)
+        print("Valeur maximale:%s" % self.max_color_value)
 
-    def writeTerminal(self, msg):
-        self.terminal.insertPlainText(msg)
-        self.terminal.insertPlainText('\n')
-        self.terminal.moveCursor(QtGui.QTextCursor.End)
+
+

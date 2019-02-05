@@ -13,13 +13,15 @@ class MplWidgetHandler(Canvas):
     def __init__(self):
         # SET FIGURE OPTIONS
         self.fig = plt.figure(facecolor=(0.3, 0.3, 0.3))
-        self.fig.set_size_inches(2,2)
+        self.fig.set_size_inches(2, 2)
         self.axes = self.fig.add_subplot(111)
+        self.fig.subplots_adjust(0, 0, 1, 1)
         self.axes.set_frame_on(False)
         self.axes.invert_yaxis()
         self.axes.axis('off')
         self.axes.xaxis.set_visible(False)
         self.axes.yaxis.set_visible(False)
+
 
         # SET CANVAS
         Canvas.__init__(self, self.fig)
@@ -34,20 +36,11 @@ class MplWidgetHandler(Canvas):
 
         # SET CLASS VARIABLE INITIALISATION
         self.canvasSizePixel = []
-        self.devicesNumber = 1
+        self.devicesNumber = 0
         self.devices = []  # [index, name, xPos, yPos, regex]
         self.relativeSensorSize = []
         self.xmax = 0
         self.ymax = 0
-
-
-    def addSensor(self):
-        self.devices += 1
-        x, y = self.getNextPosition()
-        sensorSize = self.getActualSensorRelativeSize()
-        canvasSize = self.getActualCanvasPixelSize()
-        self.axes.add_artist(patches.Rectangle((x/canvasSize[0], y/canvasSize[1]), sensorSize[0], sensorSize[1], edgecolor='black', facecolor='black', fill=True))
-        self.draw()
 
     def getActualSensorRelativeSize(self):
         size = self.sensorPixelSize/(self.fig.get_size_inches() * self.fig.dpi)
@@ -90,12 +83,16 @@ class MplWidgetHandler(Canvas):
         self.getActualSensorRelativeSize()
         self.getActualCanvasPixelSize()
         self.calculateSensorRelativePosition()
+        self.resetSensors()
+        placed = 0
         for i in self.relativePositionsTuples:
-            self.axes.add_artist(
-            patches.Rectangle((i[0], i[1]), self.relativeSensorSize[0], self.relativeSensorSize[1], edgecolor='black',
-                              facecolor='black', fill=True))
-
-        self.fig.subplots_adjust(0, 0, 1, 1)
+            if self.devicesNumber - placed != 0:
+                self.axes.add_artist(
+                patches.Rectangle((i[0], i[1]), self.relativeSensorSize[0], self.relativeSensorSize[1], edgecolor='black',
+                                  facecolor='black', fill=True))
+                placed = placed + 1
+                localDevice = ["", i[0], i[1], self.relativeSensorSize[0], self.relativeSensorSize[1], ""]
+                self.devices.append(localDevice)
         self.draw()
 
     def updateSensorNumber(self, number):
@@ -107,15 +104,18 @@ class MplWidgetHandler(Canvas):
 
     def canvasPossibleSensorAmount(self):
         canvasSize = self.getActualCanvasPixelSize()
-        self.xmax = xAmount = int(round(2*canvasSize[0]/(3*self.sensorPixelSize[0])))
-        self.ymax = yAmount = int(round(2 * canvasSize[1] / (3 * self.sensorPixelSize[1])))
+        self.xmax = xAmount = int(round(canvasSize[0]/((3/2)*self.sensorPixelSize[0] + 0.5*self.sensorPixelSize[0])))
+        self.ymax = yAmount = int(round(canvasSize[1] / ((3/2)*self.sensorPixelSize[1] + 0.5*self.sensorPixelSize[1])))
         print("There can be %f sensor in the X axis" % xAmount)
         print("There can be %f sensor in the Y axis" % yAmount)
 
-    def updateSizePosition(self):
+    def resetSensors(self):
+        '''When new sensors are places, the graph must reset in order to add the new sensors'''
         pass
-        # canvasSize = self.getActualCanvasPixelSize()
-        # print("Actual canvas size:", canvasSize)
+
+    def updateSizePosition(self):
+        '''When the window is resized, the size and the position of the rectangles have to be updated'''
+        pass
 
 
 
