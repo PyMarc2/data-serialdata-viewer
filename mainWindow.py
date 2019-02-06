@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-
 from PyQt5.QtCore import QSize, Qt, QTimer, QThreadPool, pyqtSignal, QTime
 from threadWorker import Worker
 from PyQt5 import QtCore
 from mainWindowUi import Ui_ViewerWidget
-import serialMock as serial
+#import serialMock as serial
+import serial
 import sys
 import glob
 
@@ -24,6 +24,9 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.connectedPort = ''
         self.connected = 0
         self.baudrate = 9600
+
+        self.checkbox_Autoscroll.setChecked(True)
+        self.autoScroll = 1
 
         # INITIALISATION SERIAL COMMUNICATION
         self.ports = self.scanPorts()
@@ -46,12 +49,16 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.checkBox_Terminal.stateChanged.connect(self.showTerminal)
 
         self.pushButton_Connect.clicked.connect(self.Connect)
+        self.checkbox_Autoscroll.stateChanged.connect(self.autoScrollEnable)
 
         # GRAPHICAL FUNCTIONS SETTINGS
         self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
         self.pushButton_Place.clicked.connect(self.placeSensors)
 
         self.resized.connect(self.updateSizePosition)
+
+        # INTERACTION FUNCTIONS
+        self.widget_Mpl.canvas.mpl_connect('button_press_event', self.clickRectangle)
 
         # COLOR SELECTION SETTINGS
         color_dict = {
@@ -159,7 +166,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
     def readSerial(self, statusSignal=None):
         print("Thread has initiated serial read")
         while self.connected:
-            data = (str(self.serialComm.read()))
+            data = (self.serialComm.read().decode('ASCII'))
             # print(data)
             self.writeSignal.emit(data)
         else:
@@ -178,16 +185,22 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
     def writeTerminal(self, msg):
         self.terminal.insertPlainText(msg)
-        self.terminal.insertPlainText('\n')
-        self.terminal.moveCursor(QtGui.QTextCursor.End)
+        if self.autoScroll:
+            self.terminal.moveCursor(QtGui.QTextCursor.End)
+
+    def autoScrollEnable(self):
+        if self.checkbox_Autoscroll.isChecked():
+            self.autoScroll = 1
+        else:
+            self.autoScroll = 0
 
     # =========== GRAPHICAL INTERACTION FUNCTIONS ============== #
     def resizeEvent(self, event):
         self.resized.emit()
         return super(MainWindow, self).resizeEvent(event)
 
-    def indicator(self):
-        print("a")
+    def updateSizePosition(self):
+        self.widget_Mpl.canvas.updateSizePosition()
 
     def updateSensorNumber(self):
         sensors = self.SpinBox_numberSelect.value()
@@ -197,9 +210,10 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.widget_Mpl.canvas.updateRelativePositions()
         self.widget_Mpl.canvas.placeSensor()
 
-    def updateSizePosition(self):
-        self.widget_Mpl.canvas.getActualSensorRelativeSize()
-        self.widget_Mpl.canvas.updateSizePosition()
+
+    def clickRectangle(self):
+        print(self.cursor().pos())
+
 
 
     # ============= COLOR SELECTION FUNCTIONS ============ #
