@@ -57,9 +57,6 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
         self.resized.connect(self.updateSizePosition)
 
-        # INTERACTION FUNCTIONS
-        self.widget_Mpl.canvas.mpl_connect('button_press_event', self.clickRectangle)
-
         # COLOR SELECTION SETTINGS
         color_dict = {
             'red': '#ff0000',
@@ -212,7 +209,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
 
     def clickRectangle(self):
-        print(self.cursor().pos())
+        pass
 
 
 
