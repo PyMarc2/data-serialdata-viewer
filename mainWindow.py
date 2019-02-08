@@ -25,12 +25,8 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.connected = 0
         self.baudrate = 9600
 
-        self.checkbox_Autoscroll.setChecked(True)
-        self.autoScroll = 1
 
-
-
-        # INSERT TERMINAL IN MAIN WINDOW
+        # INSERT THREAD FOR TERMINAL
         self.threadPool = QThreadPool()
         self.writeSignal.connect(self.writeTerminal)
         self.terminalWorker = None
@@ -45,14 +41,13 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
         self.checkBox_Terminal.setChecked(True)
         self.checkBox_Terminal.stateChanged.connect(self.showTerminal)
+        self.checkbox_Autoscroll.setChecked(True)
+        self.checkbox_Autoscroll.stateChanged.connect(self.autoScrollEnable)
+        self.autoScroll = 1
 
         self.pushButton_Connect.clicked.connect(self.Connect)
-        self.checkbox_Autoscroll.stateChanged.connect(self.autoScrollEnable)
 
-        # GRAPHICAL FUNCTIONS SETTINGS
-        #self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
-        #self.pushButton_Place.clicked.connect(self.placeSensors)
-
+        # GRAPHICAL CONNECTIONS
         self.resized.connect(self.updateSizePosition)
 
         # COLOR SELECTION SETTINGS
@@ -111,18 +106,21 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
         if len(result) == 0:
             try:
+                self.writeTerminal("No serial devices found.\n")
                 self.pushButton_Connect.clicked.disconnect(self.Connect)
             except Exception:
-                pass
+                self.pushButton_Connect.clicked.disconnect(self.scanPorts)
             self.pushButton_Connect.setText("Scan")
             self.pushButton_Connect.clicked.connect(self.scanPorts)
+            pass
         else:
             try:
                 self.pushButton_Connect.clicked.disconnect(self.scanPorts)
             except Exception:
-                pass
+                self.pushButton_Connect.clicked.disconnect(self.Connect)
             self.pushButton_Connect.setText("Connect")
             self.pushButton_Connect.clicked.connect(self.Connect)
+            pass
 
     def updateBaudrate(self):
         try:
@@ -234,19 +232,6 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
     def updateSizePosition(self):
         self.widget_Mpl.canvas.updateSizePosition()
-
-    def updateSensorNumber(self):
-        sensors = self.SpinBox_numberSelect.value()
-        self.widget_Mpl.canvas.updateSensorNumber(sensors)
-
-    def placeSensors(self):
-        self.widget_Mpl.canvas.updateRelativePositions()
-        self.widget_Mpl.canvas.placeSensor()
-
-
-    def clickRectangle(self):
-        pass
-
 
 
     # ============= COLOR SELECTION FUNCTIONS ============ #

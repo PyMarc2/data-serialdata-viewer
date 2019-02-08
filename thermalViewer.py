@@ -43,10 +43,12 @@ class MplWidgetHandler(Canvas):
         #print("Initialization canvas pixel: ", self.canvasSizePixel)
 
         # CONNECT CANVAS CLICK FUNCTIONS
-        self.ciddouble = self.mpl_connect('button_press_event', self.createRectangle)
+        self.cigdouble = self.mpl_connect('button_press_event', self.createRectangle)
+        self.ciddouble = self.mpl_connect('button_press_event', self.deleteRectangle)
 
     def createRectangle(self, event):
-        print(event.x, event.y, event.dblclick)
+        #print(event.x, event.y, event.dblclick)
+
         relPosX = event.x / (self.fig.get_size_inches()[0] * self.fig.dpi)
         relPosY = 1 - (event.y / (self.fig.get_size_inches()[1] * self.fig.dpi))
         relSizeX = self.sensorPixelSize[0]/(self.fig.get_size_inches()[0] * self.fig.dpi)
@@ -57,8 +59,9 @@ class MplWidgetHandler(Canvas):
         absSizeY = self.sensorPixelSize[1]
 
         if event.dblclick and event.button == 1:
-            print("relative X position:", relPosX)
-            print("relative Y position:", relPosY)
+            print("The rectangle selected should be created.")
+            #print("relative X position:", relPosX)
+            #print("relative Y position:", relPosY)
 
             rect = self.axes.add_artist(patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black', fill=True))
             dr = DraggableRectangle(rect)
@@ -70,6 +73,14 @@ class MplWidgetHandler(Canvas):
             self.devices.append(local)
 
             print("The amount of sensors is %i" % self.devicesNumber)
+
+    def deleteRectangle(self, event):
+        if event.dblclick and event.button == 3:
+            print("The rectangle selected should disseapear.")
+
+    def changeRectangle(self, event):
+        if event.button == 3 and event.dblclick is False:
+            print("An option menu with 'name' and 're' should appear.")
 
     def calculateNewRelativePosition(self):
         for sensorIndex in range(len(self.devices)):
