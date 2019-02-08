@@ -18,7 +18,6 @@ class DraggableRectangle:
         self.cidmotion = self.rect.figure.canvas.mpl_connect(
             'motion_notify_event', self.on_motion)
 
-
     def on_press(self, event):
         'on button press we will see if the mouse is over us and store some data'
         if event.inaxes != self.rect.axes: return

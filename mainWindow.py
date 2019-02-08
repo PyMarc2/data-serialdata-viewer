@@ -28,9 +28,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.checkbox_Autoscroll.setChecked(True)
         self.autoScroll = 1
 
-        # INITIALISATION SERIAL COMMUNICATION
-        self.ports = self.scanPorts()
-        self.comboBox_port.addItems(self.ports)
+
 
         # INSERT TERMINAL IN MAIN WINDOW
         self.threadPool = QThreadPool()
@@ -52,8 +50,8 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.checkbox_Autoscroll.stateChanged.connect(self.autoScrollEnable)
 
         # GRAPHICAL FUNCTIONS SETTINGS
-        self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
-        self.pushButton_Place.clicked.connect(self.placeSensors)
+        #self.SpinBox_numberSelect.valueChanged.connect(self.updateSensorNumber)
+        #self.pushButton_Place.clicked.connect(self.placeSensors)
 
         self.resized.connect(self.updateSizePosition)
 
@@ -84,6 +82,9 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         self.lineEdit_minColor.returnPressed.connect(self.updateColors)
         self.lineEdit_maxColor.returnPressed.connect(self.updateColors)
 
+        # INITIALISATION SERIAL COMMUNICATION
+        self.scanPorts()
+
     # =========== TERMINAL FUNCTIONS ============== #
     def scanPorts(self):
         if sys.platform.startswith('win'):
@@ -105,7 +106,23 @@ class MainWindow(QWidget, Ui_ViewerWidget):
             except (OSError, serial.SerialException):
                 pass
         print("Found devices:", result)
-        return result
+        self.comboBox_port.clear()
+        self.comboBox_port.addItems(result)
+
+        if len(result) == 0:
+            try:
+                self.pushButton_Connect.clicked.disconnect(self.Connect)
+            except Exception:
+                pass
+            self.pushButton_Connect.setText("Scan")
+            self.pushButton_Connect.clicked.connect(self.scanPorts)
+        else:
+            try:
+                self.pushButton_Connect.clicked.disconnect(self.scanPorts)
+            except Exception:
+                pass
+            self.pushButton_Connect.setText("Connect")
+            self.pushButton_Connect.clicked.connect(self.Connect)
 
     def updateBaudrate(self):
         try:
@@ -141,6 +158,13 @@ class MainWindow(QWidget, Ui_ViewerWidget):
                 self.pushButton_Connect.clicked.disconnect()
                 self.pushButton_Connect.clicked.connect(self.Disconnect)
 
+        except serial.serialutil.SerialException as e:
+            print(e)
+            self.comboBox_port.clear()
+            self.pushButton_Connect.setText("Scan")
+            self.pushButton_Connect.clicked.disconnect(self.Connect)
+            self.pushButton_Connect.clicked.connect(self.scanPorts)
+
         except Exception as e:
             print("\nError occurred during connection initialisation to Port %s." % self.selectedPort)
             print(e)
@@ -173,12 +197,24 @@ class MainWindow(QWidget, Ui_ViewerWidget):
     def showTerminal(self):
         if self.checkBox_Terminal.isChecked():
             self.terminal.setEnabled(True)
+            self.checkbox_Autoscroll.setEnabled(True)
+            self.pushButton_clearTerminal.setEnabled(True)
+            self.pushButton_saveTerminal.setEnabled(True)
             print("Terminal Opens")
             self.terminal.setVisible(True)
+            self.checkbox_Autoscroll.setVisible(True)
+            self.pushButton_saveTerminal.setVisible(True)
+            self.pushButton_clearTerminal.setVisible(True)
         else:
             self.terminal.setEnabled(False)
+            self.checkbox_Autoscroll.setEnabled(False)
+            self.pushButton_clearTerminal.setEnabled(False)
+            self.pushButton_saveTerminal.setEnabled(False)
             print("Terminal Closes")
             self.terminal.setVisible(False)
+            self.checkbox_Autoscroll.setVisible(False)
+            self.pushButton_saveTerminal.setVisible(False)
+            self.pushButton_clearTerminal.setVisible(False)
 
     def writeTerminal(self, msg):
         self.terminal.insertPlainText(msg)
