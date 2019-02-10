@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
+import signal
+from PyQt5 import QtCore
+#from thermalViewer import MplWidgetHandler
 
 class DraggableRectangle:
     lock = None  # only one can be animated at a time
+
     def __init__(self, rect):
         self.rect = rect
         self.press = None
@@ -24,8 +28,9 @@ class DraggableRectangle:
         if DraggableRectangle.lock is not None: return
         contains, attrd = self.rect.contains(event)
         if not contains: return
-        #print('event contains', self.rect.xy)
+        #print('Held @', self.rect.xy)
         x0, y0 = self.rect.xy
+        self.saveInFile(str(self.rect.xy))
         self.press = x0, y0, event.xdata, event.ydata
         DraggableRectangle.lock = self
 
@@ -69,6 +74,7 @@ class DraggableRectangle:
         if DraggableRectangle.lock is not self:
             return
 
+        x0, y0 = self.rect.xy
         self.press = None
         DraggableRectangle.lock = None
 
@@ -78,6 +84,14 @@ class DraggableRectangle:
 
         # redraw the full figure
         self.rect.figure.canvas.draw()
+        #print("Realeased @", x0, y0)
+
+    def saveInFile(self, drop):
+        filename = "pos.txt"
+        with open(filename, "w") as file:
+            file.write(drop)
+            file.close()
+        #print("write succeded")
 
     def disconnect(self):
         'disconnect all the stored connection ids'
@@ -85,41 +99,6 @@ class DraggableRectangle:
         self.rect.figure.canvas.mpl_disconnect(self.cidrelease)
         self.rect.figure.canvas.mpl_disconnect(self.cidmotion)
 
-class myFig:
-    def __init__(self):
-        self.fig = plt.figure()
-        self.fig.set_size_inches(2, 2)
-        self.axes = self.fig.add_subplot(111)
-        self.fig.subplots_adjust(0, 0, 1, 1)
-        self.axes.set_frame_on(False)
-        self.axes.invert_yaxis()
-        self.axes.axis('off')
-        self.axes.xaxis.set_visible(False)
-        self.axes.yaxis.set_visible(False)
-        self.press = None
-        self.relativeSensorSize = [0.1, 0.1]
-        self.connect()
-    def connect(self):
-        'connect to all the events we need'
-        self.ciddouble = self.fig.canvas.mpl_connect('button_press_event', self.createRectangle)
-
-    def createRectangle(self, event):
-        print(event.x, event.y, event.dblclick)
-        if event.dblclick:
-            print("Nemo")
-            rect = self.axes.add_artist(patches.Rectangle((0.1, 0.1), self.relativeSensorSize[0], self.relativeSensorSize[1],
-                              edgecolor='black',
-                              facecolor='black', fill=True))
-            dr = DraggableRectangle(rect)
-            dr.connect()
-            drs.append(dr)
-            self.fig.canvas.draw()
-            self.fig.show()
-            print("Doris")
-
-    def disconnect(self):
-        'disconnect all the stored connection ids'
-        self.fig.canvas.mpl_disconnect(self.ciddouble)
 
 
 

@@ -32,6 +32,7 @@ class MplWidgetHandler(Canvas):
         # DECLARE GENERAL VARIABLES
         self.devices = []  # [name, re, xRelPos, yRelPos, xRelSize, yRelSize, xAbsPos, yAbsPos, xAbsSize, yAbsSize]
         self.drs = []
+        self.clickedIndex = None
         self.devicesNumber = 0
         self.xmax = 0
         self.ymax = 0
@@ -43,8 +44,11 @@ class MplWidgetHandler(Canvas):
         #print("Initialization canvas pixel: ", self.canvasSizePixel)
 
         # CONNECT CANVAS CLICK FUNCTIONS
-        self.cigdouble = self.mpl_connect('button_press_event', self.createRectangle)
-        self.ciddouble = self.mpl_connect('button_press_event', self.deleteRectangle)
+
+        self.cigdouble  = self.mpl_connect('button_press_event', self.createRectangle)
+        self.ciddouble  = self.mpl_connect('button_press_event', self.deleteRectangle)
+        #self.storeselected = self.mpl_connect('button_press_event', self.storeSelectedRectangle)
+        #self.cimoved    = self.mpl_connect('button_release_event', self.updateRectangleOnRelease)
 
     def createRectangle(self, event):
         #print(event.x, event.y, event.dblclick)
@@ -59,35 +63,47 @@ class MplWidgetHandler(Canvas):
         absSizeY = self.sensorPixelSize[1]
 
         if event.dblclick and event.button == 1:
-            print("The rectangle selected should be created.")
-            #print("relative X position:", relPosX)
-            #print("relative Y position:", relPosY)
+            #print("The rectangle selected should be created.")
 
             rect = self.axes.add_artist(patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black', fill=True))
             dr = DraggableRectangle(rect)
             dr.connect()
+            dr.rect.figure.canvas.mpl_connect('button_release_event', self.updateRectangleOnRelease)
+            print(dr.rect.xy)
             self.drs.append(dr)
             self.fig.canvas.draw()
-            local = ["", "", relPosX, relPosY, relSizeX, relSizeY, absPoxX, absPosY, absSizeX, absSizeY]
+            local = ["", "", (relPosX, relPosY), relSizeX, relSizeY, (absPoxX, absPosY), absSizeX, absSizeY]
             self.devicesNumber = self.devicesNumber + 1
             self.devices.append(local)
 
-            print("The amount of sensors is %i" % self.devicesNumber)
+            #print("The amount of sensors is %i" % self.devicesNumber)
 
     def deleteRectangle(self, event):
         if event.dblclick and event.button == 3:
-            print("The rectangle selected should disseapear.")
+            print("The rectangle %i should disseapear." % self.clickedIndex)
+            del self.devices[self.clickedIndex]
+            self.devicesNumber = self.devicesNumber -1
+            del self.drs[self.clickedIndex]
+            self.updateSizePosition()
 
     def changeRectangle(self, event):
-        if event.button == 3 and event.dblclick is False:
+        if event.button == 3 and event.dblclick == False:
             print("An option menu with 'name' and 're' should appear.")
 
-    def calculateNewRelativePosition(self):
-        for sensorIndex in range(len(self.devices)):
-            self.devices[sensorIndex][2] = self.devices[sensorIndex][6] / (self.fig.get_size_inches()[0] * self.fig.dpi)
-            self.devices[sensorIndex][3] = self.devices[sensorIndex][7] / (self.fig.get_size_inches()[1] * self.fig.dpi)
-            self.devices[sensorIndex][4] = self.devices[sensorIndex][8] / (self.fig.get_size_inches()[0] * self.fig.dpi)
-            self.devices[sensorIndex][5] = self.devices[sensorIndex][9] / (self.fig.get_size_inches()[1] * self.fig.dpi)
+    def updateRectangleOnRelease(self, event):
+        filename = "pos.txt"
+        with open(filename, "r") as file:
+            varia = file.read()
+            file.close()
+
+        #print("\n varia is:", varia)
+
+        for i in range(len(self.devices)):
+            if str(varia) == str(self.devices[i][2]):
+                #print("succes, index is %i" % i)
+                self.clickedIndex = i
+                self.devices[i][2] = self.drs[i].rect.xy
+                self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi), self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
 
     def resetCanvas(self):
         '''When new sensors are places, the graph must reset in order to add the new sensors'''
@@ -102,17 +118,17 @@ class MplWidgetHandler(Canvas):
 
     def updateSizePosition(self):
         '''When the window is resized, the size and the position of the rectangles have to be updated'''
-        #self.saveSensorsTemp()
         self.resetCanvas()
-        self.calculateNewRelativePosition()
+        for sensorIndex in range(len(self.devices)):
+            self.devices[sensorIndex][2] = (self.devices[sensorIndex][5][0] / (self.fig.get_size_inches()[0] * self.fig.dpi), self.devices[sensorIndex][5][1] / (self.fig.get_size_inches()[1] * self.fig.dpi))
+            self.devices[sensorIndex][3] = self.devices[sensorIndex][6] / (self.fig.get_size_inches()[0] * self.fig.dpi)
+            self.devices[sensorIndex][4] = self.devices[sensorIndex][7] / (self.fig.get_size_inches()[1] * self.fig.dpi)
+
         self.drs = []
         placed = 0
         for sensor in self.devices:
             if self.devicesNumber - placed != 0:
-                rect = self.axes.add_artist(
-                    patches.Rectangle((sensor[2], sensor[3]), sensor[4], sensor[5],
-                                      edgecolor='black',
-                                      facecolor='black', fill=True))
+                rect = self.axes.add_artist(patches.Rectangle((sensor[2][0], sensor[2][1]), sensor[3], sensor[4], edgecolor='black', facecolor='black', fill=True))
                 placed = placed + 1
                 dr = DraggableRectangle(rect)
                 dr.connect()
