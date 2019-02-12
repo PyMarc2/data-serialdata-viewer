@@ -12,7 +12,7 @@ matplotlib.use('QT5Agg')
 
 class MplWidgetHandler(Canvas):
     def __init__(self):
-
+        self.dialog = None
         # SET FIGURE OPTIONS
         self.fig = plt.figure(facecolor=(0.3, 0.3, 0.3))
         self.axes = self.fig.add_subplot(111)
@@ -73,11 +73,10 @@ class MplWidgetHandler(Canvas):
             rect = self.axes.add_artist(patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black', fill=True))
             dr = DraggableRectangle(rect, self)
             dr.connect()
-            #dr.rect.figure.canvas.mpl_connect('button_release_event', self.updateRectangleOnRelease)
             print(dr.rect.xy)
             self.drs.append(dr)
             self.fig.canvas.draw()
-            local = ["", "", (relPosX, relPosY), relSizeX, relSizeY, (absPoxX, absPosY), absSizeX, absSizeY]
+            local = ["", "", (relPosX, relPosY), relSizeX, relSizeY, (absPoxX, absPosY), absSizeX, absSizeY, "", None, None]
             self.devicesNumber = self.devicesNumber + 1
             self.devices.append(local)
 
@@ -89,15 +88,11 @@ class MplWidgetHandler(Canvas):
             varia = file.read()
             file.flush()
 
-        # print("\n varia is:", varia)
-
         for i in range(len(self.devices)):
             verify = str(self.devices[i][2])
             if str(varia) == verify:
                 print("Clicked rectangle #%i" % i)
                 self.clickedIndex = i
-                #self.devices[i][2] = self.drs[i].rect.xy
-                #self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi), self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
                 break
 
             else:
@@ -107,17 +102,6 @@ class MplWidgetHandler(Canvas):
             i = self.clickedIndex
             self.devices[i][2] = self.drs[i].rect.xy
             self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi), self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
-
-    def changeRectangle(self, event):
-        if event.button == 3:
-            print(self.clickedIndex)
-            if self.clickedIndex != None:
-                print("You are changing sensor #%i." % self.clickedIndex)
-                dialog = QDialog()
-                dialog.ui = Ui_Dialog()
-                dialog.ui.setupUi(dialog)
-                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-                dialog.exec_()
 
     def resetCanvas(self):
         '''When new sensors are places, the graph must reset in order to add the new sensors'''
@@ -151,6 +135,44 @@ class MplWidgetHandler(Canvas):
 
         self.draw()
 
+    def changeRectangle(self, event):
+        if event.button == 3:
+            if self.clickedIndex != None:
+                print("You are changing sensor #%i." % self.clickedIndex)
+
+                # Initialisation
+                self.dialog = QDialog()
+                self.dialog.ui = Ui_Dialog()
+                self.dialog.ui.setupUi(self.dialog)
+                self.dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+
+                # Settings
+                self.dialog.setWindowTitle("Sensor {} Options".format(self.clickedIndex))
+                self.dialog.ui.comboBox_colorMap.addItems(['None', 'Viridis', 'Jet', 'Polar'])
+
+                # Connections
+                self.dialog.ui.pushButton_ok.clicked.connect(self.updateRectangleOptions)
+                self.dialog.ui.pushButton_ok.clicked.connect(self.dialog.close)
+
+                # self.dialog.ui.lineEdit_Name.text()
+                # self.dialog.ui.lineEdit_re.text()
+                # self.dialog.ui.lineEdit_min.text()
+                # self.dialog.ui.comboBox_colorMap.itemText()
+
+                self.dialog.exec_()
+
+    def updateRectangleOptions(self):
+        print(self.dialog.ui.lineEdit_Name.text())
+        print(self.dialog.ui.lineEdit_re.text())
+        print(self.dialog.ui.comboBox_colorMap.currentText())
+        print(self.dialog.ui.lineEdit_min.text())
+        print(self.dialog.ui.lineEdit_max.text())
+
+        print("Options updated.")
+
+
+
+    # OLD FUNCTION THAT MIGHT BE REUSED IN THE FUTURE
     # def deleteRectangle(self, event):
     #     if event.dblclick==False and event.button == 2:
     #         if self.clickedIndex != None:

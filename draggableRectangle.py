@@ -85,7 +85,7 @@ class DraggableRectangle:
         self.rect.set_animated(False)
         self.background = None
         self.saveInFile(str(self.rect.xy))
-        print("release write succeded")
+        print("release write succeded\n\n")
         # redraw the full figure
         self.rect.figure.canvas.draw()
         #print("Realeased @", x0, y0)
