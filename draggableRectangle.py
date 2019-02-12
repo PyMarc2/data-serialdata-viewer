@@ -8,7 +8,8 @@ from PyQt5 import QtCore
 class DraggableRectangle:
     lock = None  # only one can be animated at a time
 
-    def __init__(self, rect):
+    def __init__(self, rect, canvas):
+        self.canvas = canvas
         self.rect = rect
         self.press = None
         self.background = None
@@ -47,6 +48,7 @@ class DraggableRectangle:
 
         # and blit just the redrawn area
         canvas.blit(axes.bbox)
+        self.canvas.checkRectangleOnClick()
 
     def on_motion(self, event):
         'on motion we will move the rect if the mouse is over us'
@@ -87,6 +89,7 @@ class DraggableRectangle:
         # redraw the full figure
         self.rect.figure.canvas.draw()
         #print("Realeased @", x0, y0)
+        self.canvas.checkRectangleOnRelease()
 
     def saveInFile(self, drop):
         filename = "pos.txt"

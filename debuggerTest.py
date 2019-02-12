@@ -16,8 +16,6 @@ class DraggableRectangle:
             'button_press_event', self.on_press)
         self.cidrelease = self.rect.figure.canvas.mpl_connect(
             'button_release_event', self.on_release)
-        self.cidmotion = self.rect.figure.canvas.mpl_connect(
-            'motion_notify_event', self.on_motion)
 
     def on_press(self, event):
         'on button press we will see if the mouse is over us and store some data'
@@ -25,7 +23,7 @@ class DraggableRectangle:
         if DraggableRectangle.lock is not None: return
         contains, attrd = self.rect.contains(event)
         if not contains: return
-        #print('Held @', self.rect.xy)
+        print('Held @', self.rect.xy)
         x0, y0 = self.rect.xy
         self.saveInFile(str(self.rect.xy))
         print("click write succeded")
@@ -45,28 +43,6 @@ class DraggableRectangle:
         # and blit just the redrawn area
         canvas.blit(axes.bbox)
 
-    def on_motion(self, event):
-        'on motion we will move the rect if the mouse is over us'
-        if DraggableRectangle.lock is not self:
-            return
-        if event.inaxes != self.rect.axes: return
-        x0, y0, xpress, ypress = self.press
-        dx = event.xdata - xpress
-        dy = event.ydata - ypress
-        self.rect.set_x(x0+dx)
-        self.rect.set_y(y0+dy)
-
-        canvas = self.rect.figure.canvas
-        axes = self.rect.axes
-        # restore the background region
-        canvas.restore_region(self.background)
-
-        # redraw just the current rectangle
-        axes.draw_artist(self.rect)
-
-        # blit just the redrawn area
-        canvas.blit(axes.bbox)
-
     def on_release(self, event):
         'on release we reset the press data'
         if DraggableRectangle.lock is not self:
@@ -80,7 +56,7 @@ class DraggableRectangle:
         self.rect.set_animated(False)
         self.background = None
         self.saveInFile(str(self.rect.xy))
-        print("release write succeded")
+        print("release write succeded\n")
         # redraw the full figure
         self.rect.figure.canvas.draw()
         #print("Realeased @", x0, y0)
@@ -90,13 +66,6 @@ class DraggableRectangle:
         with open(filename, "w") as file:
             file.write(drop)
             file.close()
-
-
-    def disconnect(self):
-        'disconnect all the stored connection ids'
-        self.rect.figure.canvas.mpl_disconnect(self.cidpress)
-        self.rect.figure.canvas.mpl_disconnect(self.cidrelease)
-        self.rect.figure.canvas.mpl_disconnect(self.cidmotion)
 
 
 class MyFigure:
@@ -133,7 +102,6 @@ class MyFigure:
         absSizeY = self.sensorPixelSize[1]
 
         if event.dblclick and event.button == 1:
-            # print("The rectangle selected should be created.")
 
             rect = self.axes.add_artist(
                 patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black',
@@ -152,15 +120,11 @@ class MyFigure:
             varia = file.read()
             file.flush()
 
-        # print("\n varia is:", varia)
-
         for i in range(len(self.devices)):
             if str(varia) == str(self.devices[i][2]):
                 print("Clicked rectangle #%i" % i)
                 self.clickedIndex = i
-                self.devices[i][2] = self.drs[i].rect.xy
-                self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi),
-                                      self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
+
             else:
                 self.clickedIndex = None
 
@@ -170,14 +134,11 @@ class MyFigure:
             varia = file.read()
             file.flush()
 
-        #print("\n varia is:", varia)
-
         for i in range(len(self.devices)):
             if str(varia) == str(self.devices[i][2]):
                 print("Realeased rectangle #%i" % i)
                 self.clickedIndex = i
-                self.devices[i][2] = self.drs[i].rect.xy
-                self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi), self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
+
             else:
                 self.clickedIndex = None
 
