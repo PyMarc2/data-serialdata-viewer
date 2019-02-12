@@ -8,10 +8,7 @@ from sensorWindowUi import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from draggableRectangle import DraggableRectangle
 matplotlib.use('QT5Agg')
-import sched, time
 
-
-s = sched.scheduler(time.time, time.sleep)
 
 class MplWidgetHandler(Canvas):
     def __init__(self):
