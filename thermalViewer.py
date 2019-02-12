@@ -2,10 +2,16 @@ import matplotlib
 from matplotlib import patches
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDialog
+from sensorWindowUi import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from draggableRectangle import DraggableRectangle
 matplotlib.use('QT5Agg')
+import sched, time
 
+
+s = sched.scheduler(time.time, time.sleep)
 
 class MplWidgetHandler(Canvas):
     def __init__(self):
@@ -46,9 +52,11 @@ class MplWidgetHandler(Canvas):
         # CONNECT CANVAS CLICK FUNCTIONS
 
         self.cigdouble  = self.mpl_connect('button_press_event', self.createRectangle)
-        self.ciddouble  = self.mpl_connect('button_press_event', self.deleteRectangle)
-        #self.storeselected = self.mpl_connect('button_press_event', self.storeSelectedRectangle)
-        #self.cimoved    = self.mpl_connect('button_release_event', self.updateRectangleOnRelease)
+        #self.ciddouble  = self.mpl_connect('button_release_event', self.updateOnCanvasRelease)
+        self.cichange    = self.mpl_connect('button_release_event', self.changeRectangle)
+
+        self.CheckClick = self.mpl_connect('button_press_event', self.checkRectangleOnClick)
+        self.CheckRelease = self.mpl_connect('button_release_event', self.checkRectangleOnRelease)
 
     def createRectangle(self, event):
         #print(event.x, event.y, event.dblclick)
@@ -68,7 +76,7 @@ class MplWidgetHandler(Canvas):
             rect = self.axes.add_artist(patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black', fill=True))
             dr = DraggableRectangle(rect)
             dr.connect()
-            dr.rect.figure.canvas.mpl_connect('button_release_event', self.updateRectangleOnRelease)
+            #dr.rect.figure.canvas.mpl_connect('button_release_event', self.updateRectangleOnRelease)
             print(dr.rect.xy)
             self.drs.append(dr)
             self.fig.canvas.draw()
@@ -78,32 +86,52 @@ class MplWidgetHandler(Canvas):
 
             #print("The amount of sensors is %i" % self.devicesNumber)
 
-    def deleteRectangle(self, event):
-        if event.dblclick and event.button == 3:
-            print("The rectangle %i should disseapear." % self.clickedIndex)
-            del self.devices[self.clickedIndex]
-            self.devicesNumber = self.devicesNumber -1
-            del self.drs[self.clickedIndex]
-            self.updateSizePosition()
-
     def changeRectangle(self, event):
-        if event.button == 3 and event.dblclick == False:
-            print("An option menu with 'name' and 're' should appear.")
+        if event.button == 3:
+           # self.updateOnCanvasRelease()
+            print(self.clickedIndex)
+            if self.clickedIndex != None:
+                print("You are changing sensor #%i." % self.clickedIndex)
+                dialog = QDialog()
+                dialog.ui = Ui_Dialog()
+                dialog.ui.setupUi(dialog)
+                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+                dialog.exec_()
 
-    def updateRectangleOnRelease(self, event):
+    def checkRectangleOnClick(self, event):
         filename = "pos.txt"
         with open(filename, "r") as file:
             varia = file.read()
-            file.close()
+            file.flush()
+
+        # print("\n varia is:", varia)
+
+        for i in range(len(self.devices)):
+            if str(varia) == str(self.devices[i][2]):
+                print("Clicked rectangle #%i" % i)
+                self.clickedIndex = i
+                self.devices[i][2] = self.drs[i].rect.xy
+                self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi),
+                                      self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
+            else:
+                self.clickedIndex = None
+
+    def checkRectangleOnRelease(self, event):
+        filename = "pos.txt"
+        with open(filename, "r") as file:
+            varia = file.read()
+            file.flush()
 
         #print("\n varia is:", varia)
 
         for i in range(len(self.devices)):
             if str(varia) == str(self.devices[i][2]):
-                #print("succes, index is %i" % i)
+                print("Realeased rectangle #%i" % i)
                 self.clickedIndex = i
                 self.devices[i][2] = self.drs[i].rect.xy
                 self.devices[i][5] = (self.drs[i].rect.xy[0] * (self.fig.get_size_inches()[0] * self.fig.dpi), self.drs[i].rect.xy[1] * (self.fig.get_size_inches()[1] * self.fig.dpi))
+            else:
+                self.clickedIndex = None
 
     def resetCanvas(self):
         '''When new sensors are places, the graph must reset in order to add the new sensors'''
@@ -137,6 +165,14 @@ class MplWidgetHandler(Canvas):
 
         self.draw()
 
+    # def deleteRectangle(self, event):
+    #     if event.dblclick==False and event.button == 2:
+    #         if self.clickedIndex != None:
+    #             print("The rectangle %i should disseapear." % self.clickedIndex)
+    #             del self.devices[self.clickedIndex]
+    #             self.devicesNumber = self.devicesNumber -1
+    #             del self.drs[self.clickedIndex]
+    #             self.updateSizePosition()
 
     # Possibly obsolete functions
 

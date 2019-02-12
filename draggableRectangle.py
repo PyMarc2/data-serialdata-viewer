@@ -81,7 +81,7 @@ class DraggableRectangle:
         # turn off the rect animation property and reset the background
         self.rect.set_animated(False)
         self.background = None
-
+        self.saveInFile(str(self.rect.xy))
         # redraw the full figure
         self.rect.figure.canvas.draw()
         #print("Realeased @", x0, y0)
@@ -91,7 +91,7 @@ class DraggableRectangle:
         with open(filename, "w") as file:
             file.write(drop)
             file.close()
-        #print("write succeded")
+        print("write succeded")
 
     def disconnect(self):
         'disconnect all the stored connection ids'
