@@ -113,6 +113,7 @@ class MplWidgetHandler(Canvas):
         self.axes.yaxis.set_visible(False)
 
     def updateSizePosition(self):
+        '''TODO: REPAIR, broken because of changes on the devices list.'''
         '''When the window is resized, the size and the position of the rectangles have to be updated'''
         self.resetCanvas()
         for sensorIndex in range(len(self.devices)):
@@ -228,10 +229,22 @@ class MplWidgetHandler(Canvas):
         for i in range(len(self.devices)):
             regex = self.devices[i][1]
             regexTest = "\w*\d?=?:? *(\d+.?\d+)"
-            research = re.search(regexTest, data).group(1)
-            self.devices[i][11] = research
-            self.drs[i].value.set_text(research)
-            print(research)
+            research = re.search(regexTest, data)
+            if len(research.group())>0:
+                self.devices[i][11] = research.group(1)
+                self.drs[i].value.set_animated(True)
+                self.drs[i].value.set_text(research.group(1))
+                print(self.drs[i].value.get_text())
+
+                #self.background = self.copy_from_bbox(self.axes.bbox)
+                #self.restore_region(self.background)
+                self.draw()
+
+                #self.blit(self.axes.bbox)
+
+
+            else:
+                print("bozo")
 
     def updateRectangleValue(self):
         '''TODO: Implement updateRectangleValue function'''

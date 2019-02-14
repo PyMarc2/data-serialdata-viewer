@@ -188,10 +188,13 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         while self.connected:
             data = (self.serialComm.read().decode('ASCII'))
             if data != '\n':
-                finalData += data
-            #print(finalData)
-            self.writeSignal.emit(finalData)
-            self.widget_Mpl.canvas.fetchFromSerial(finalData)
+                finalData = finalData+data
+
+            else:
+                #print(finalData)
+                self.writeSignal.emit(finalData)
+                self.widget_Mpl.canvas.fetchFromSerial(finalData)
+                finalData=""
         else:
             print("Thread has disconnected")
             return
