@@ -1,9 +1,11 @@
 import matplotlib
 from matplotlib import patches
+from matplotlib import text as mpltext
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QMessageBox
 from sensorWindowUi import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 from draggableRectangle import DraggableRectangle
@@ -40,21 +42,13 @@ class MplWidgetHandler(Canvas):
         self.xmax = 0
         self.ymax = 0
 
-        # GET CANVAS INFORMATION
-        #self.canvasPossibleSensorAmount()
-        #self.getActualCanvasPixelSize()
-        #self.getActualSensorRelativeSize()
-        #print("Initialization canvas pixel: ", self.canvasSizePixel)
-
         # CONNECT CANVAS CLICK FUNCTIONS
 
         self.cigdouble  = self.mpl_connect('button_press_event', self.createRectangle)
         #self.ciddouble  = self.mpl_connect('button_release_event', self.updateOnCanvasRelease)
         self.cichange    = self.mpl_connect('button_release_event', self.changeRectangle)
 
-        #self.CheckClick = self.mpl_connect('button_press_event', self.checkRectangleOnClick)
-        #self.CheckRelease = self.mpl_connect('button_release_event', self.checkRectangleOnRelease)
-
+    # ===== BASIC RECTANGLE CREATION ===== #
     def createRectangle(self, event):
         #print(event.x, event.y, event.dblclick)
 
@@ -68,19 +62,22 @@ class MplWidgetHandler(Canvas):
         absSizeY = self.sensorPixelSize[1]
 
         if event.dblclick and event.button == 1:
-            #print("The rectangle selected should be created.")
 
             rect = self.axes.add_artist(patches.Rectangle((relPosX, relPosY), relSizeX, relSizeY, edgecolor='black', facecolor='black', fill=True))
-            dr = DraggableRectangle(rect, self)
+            text = self.axes.add_artist(mpltext.Text(relPosX, relPosY, 'Name'))
+            value = self.axes.add_artist(mpltext.Text(relPosX+relSizeX/3, relPosY+relSizeY/1.8, 'value', color='white'))
+            dr = DraggableRectangle(rect, text, value, self)
             dr.connect()
             print(dr.rect.xy)
             self.drs.append(dr)
             self.fig.canvas.draw()
-            local = ["", "", (relPosX, relPosY), relSizeX, relSizeY, (absPoxX, absPosY), absSizeX, absSizeY, "", None, None]
+            local = ["", "", (relPosX, relPosY), relSizeX, relSizeY, (absPoxX, absPosY), absSizeX, absSizeY, "", 0.0, 0.0, ""]
             self.devicesNumber = self.devicesNumber + 1
             self.devices.append(local)
 
-            #print("The amount of sensors is %i" % self.devicesNumber)
+    def deleteRectangle(self, event):
+        ''' TODO: Implement deleteRectangle function '''
+        pass
 
     def checkRectangleOnClick(self):
         filename = "pos.txt"
@@ -135,6 +132,11 @@ class MplWidgetHandler(Canvas):
 
         self.draw()
 
+    # ===== RECTANGLE OPTIONS AND MORE ===== #
+    def refreshCanvas(self):
+        self.resetCanvas()
+        self.updateSizePosition()
+
     def changeRectangle(self, event):
         if event.button == 3:
             if self.clickedIndex != None:
@@ -149,27 +151,88 @@ class MplWidgetHandler(Canvas):
                 # Settings
                 self.dialog.setWindowTitle("Sensor {} Options".format(self.clickedIndex))
                 self.dialog.ui.comboBox_colorMap.addItems(['None', 'Viridis', 'Jet', 'Polar'])
+                self.loadRectangleOptions()
 
                 # Connections
                 self.dialog.ui.pushButton_ok.clicked.connect(self.updateRectangleOptions)
-                self.dialog.ui.pushButton_ok.clicked.connect(self.dialog.close)
 
-                # self.dialog.ui.lineEdit_Name.text()
+                #self.dialog.ui.lineEdit_Name.setText()
                 # self.dialog.ui.lineEdit_re.text()
                 # self.dialog.ui.lineEdit_min.text()
-                # self.dialog.ui.comboBox_colorMap.itemText()
+                #self.dialog.ui.comboBox_colorMap.setCurrentText()
 
                 self.dialog.exec_()
 
+    def loadRectangleOptions(self):
+        self.dialog.ui.lineEdit_Name.setText(str(self.devices[self.clickedIndex][0]))
+        self.dialog.ui.lineEdit_re.setText(str(self.devices[self.clickedIndex][1]))
+        self.dialog.ui.comboBox_colorMap.setCurrentText(str(self.devices[self.clickedIndex][8]))
+        self.dialog.ui.lineEdit_min.setText(str(self.devices[self.clickedIndex][9]))
+        self.dialog.ui.lineEdit_max.setText(str(self.devices[self.clickedIndex][10]))
+
     def updateRectangleOptions(self):
-        print(self.dialog.ui.lineEdit_Name.text())
-        print(self.dialog.ui.lineEdit_re.text())
-        print(self.dialog.ui.comboBox_colorMap.currentText())
-        print(self.dialog.ui.lineEdit_min.text())
-        print(self.dialog.ui.lineEdit_max.text())
+        self.errorOptions = 0
+        self.msgbox = QMessageBox()
+        self.msgbox.setIcon(QMessageBox.Warning)
+        self.msgbox.setText("Warning")
+        self.msgbox.setWindowTitle("Option format warning")
+        try:
+            self.devices[self.clickedIndex][0] = self.dialog.ui.lineEdit_Name.text()
+        except Exception:
+            self.errorOptions = 1
+            self.msgbox.setInformativeText("You must enter text which complies with the UTF-8 encoding.")
+            self.msgbox.exec_()
 
-        print("Options updated.")
+        try:
+            self.devices[self.clickedIndex][1] = (self.dialog.ui.lineEdit_re.text())
+        except Exception:
+            self.errorOptions = 1
+            self.msgbox.setInformativeText("You must enter a valid regular expression.")
+            self.msgbox.exec_()
 
+        try:
+            self.devices[self.clickedIndex][8] = self.dialog.ui.comboBox_colorMap.currentText()
+        except Exception:
+            self.errorOptions = 1
+            self.msgbox.setInformativeText("You must enter a valid Colormap.")
+            self.msgbox.exec_()
+
+        try:
+            self.devices[self.clickedIndex][9] = float(self.dialog.ui.lineEdit_min.text())
+        except Exception:
+            self.errorOptions = 1
+            self.msgbox.setInformativeText("You must enter a number.")
+            self.msgbox.exec_()
+
+        try:
+            self.devices[self.clickedIndex][10] = float(self.dialog.ui.lineEdit_max.text())
+
+        except Exception:
+            self.errorOptions = 1
+            self.msgbox.setInformativeText("You must enter a number.")
+            self.msgbox.exec_()
+
+        if not self.errorOptions:
+            self.dialog.close()
+            self.drs[self.clickedIndex].name.set_text(self.devices[self.clickedIndex][0])
+
+            print("Object name:", self.drs[self.clickedIndex].name.get_text())
+            print("Device:", self.devices[self.clickedIndex])
+            print("Options updated.")
+
+    # ===== LIVE RE DATA FETCHING FROM SERIAL ===== #
+    def fetchFromSerial(self):
+        '''TODO: Implement fetchFromSerial function'''
+        for i in range(len(self.devices)):
+            pass
+
+    def updateRectangleValue(self):
+        '''TODO: Implement updateRectangleValue function'''
+        pass
+
+    def updateRectangleColor(self):
+        '''TODO: Implement updateRectanlgeColor function'''
+        pass
 
 
     # OLD FUNCTION THAT MIGHT BE REUSED IN THE FUTURE

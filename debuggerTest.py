@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib import patches
-
+from matplotlib import text as mpltext
 
 class DraggableRectangle:
     lock = None  # only one can be animated at a time
@@ -143,5 +143,8 @@ class MyFigure:
                 self.clickedIndex = None
 
 
-fig = MyFigure()
-plt.show()
+
+t = mpltext.Text(0.1,0.2,'Hello')
+
+t.set_text('s')
+print(t.get_text())
