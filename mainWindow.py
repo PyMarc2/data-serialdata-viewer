@@ -184,10 +184,14 @@ class MainWindow(QWidget, Ui_ViewerWidget):
 
     def readSerial(self, statusSignal=None):
         print("Thread has initiated serial read")
+        finalData = ""
         while self.connected:
             data = (self.serialComm.read().decode('ASCII'))
-            # print(data)
-            self.writeSignal.emit(data)
+            if data != '\n':
+                finalData += data
+            #print(finalData)
+            self.writeSignal.emit(finalData)
+            self.widget_Mpl.canvas.fetchFromSerial(finalData)
         else:
             print("Thread has disconnected")
             return

@@ -1,4 +1,5 @@
 import matplotlib
+import re
 from matplotlib import patches
 from matplotlib import text as mpltext
 import matplotlib.pyplot as plt
@@ -221,10 +222,16 @@ class MplWidgetHandler(Canvas):
             print("Options updated.")
 
     # ===== LIVE RE DATA FETCHING FROM SERIAL ===== #
-    def fetchFromSerial(self):
+    def fetchFromSerial(self, data):
         '''TODO: Implement fetchFromSerial function'''
+        #print("Initialization of regex evaluation")
         for i in range(len(self.devices)):
-            pass
+            regex = self.devices[i][1]
+            regexTest = "\w*\d?=?:? *(\d+.?\d+)"
+            research = re.search(regexTest, data).group(1)
+            self.devices[i][11] = research
+            self.drs[i].value.set_text(research)
+            print(research)
 
     def updateRectangleValue(self):
         '''TODO: Implement updateRectangleValue function'''

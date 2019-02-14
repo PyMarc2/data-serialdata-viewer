@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import patches
 from matplotlib import text as mpltext
+import re
 
 class DraggableRectangle:
     lock = None  # only one can be animated at a time
@@ -144,7 +145,14 @@ class MyFigure:
 
 
 
-t = mpltext.Text(0.1,0.2,'Hello')
+# t = mpltext.Text(0.1,0.2,'Hello')
+#
+# t.set_text('s')
+# print(t.get_text())
 
-t.set_text('s')
-print(t.get_text())
+data= "s4:24.55\ns3:344"
+express = "\w*\d?=?:? *(\d+.?\d+)"
+trouv = re.search(express, data)
+
+print(trouv, trouv.group(1))
+

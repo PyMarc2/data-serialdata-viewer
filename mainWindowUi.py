@@ -174,7 +174,7 @@ class Ui_ViewerWidget(object):
         self.terminal.setAutoFormatting(QtWidgets.QTextEdit.AutoNone)
         self.terminal.setTabChangesFocus(True)
         self.terminal.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
-        self.terminal.setReadOnly(True)
+        self.terminal.setReadOnly(False)
         self.terminal.setAcceptRichText(False)
         self.terminal.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.terminal.setObjectName("terminal")
