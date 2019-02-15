@@ -14,6 +14,7 @@ import glob
 class MainWindow(QWidget, Ui_ViewerWidget):
     resized = QtCore.pyqtSignal()
     writeSignal = QtCore.pyqtSignal(str)
+    valueUpdateSignal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -29,6 +30,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         # INSERT THREAD FOR TERMINAL
         self.threadPool = QThreadPool()
         self.writeSignal.connect(self.writeTerminal)
+        self.valueUpdateSignal.connect(self.widget_Mpl.canvas.fetchFromSerial)
         self.terminalWorker = None
 
         # TERMINAL CONNECTIONS
@@ -193,7 +195,7 @@ class MainWindow(QWidget, Ui_ViewerWidget):
             else:
                 #print(finalData)
                 self.writeSignal.emit(finalData)
-                self.widget_Mpl.canvas.fetchFromSerial(finalData)
+                self.valueUpdateSignal.emit(finalData)
                 finalData=""
         else:
             print("Thread has disconnected")

@@ -227,20 +227,33 @@ class MplWidgetHandler(Canvas):
         '''TODO: Implement fetchFromSerial function'''
         #print("Initialization of regex evaluation")
         for i in range(len(self.devices)):
+            blocked = 0
             regex = self.devices[i][1]
-            regexTest = "\w*\d?=?:? *(\d+.?\d+)"
-            research = re.search(regexTest, data)
-            if len(research.group())>0:
-                self.devices[i][11] = research.group(1)
-                self.drs[i].value.set_animated(True)
-                self.drs[i].value.set_text(research.group(1))
-                print(self.drs[i].value.get_text())
+            #regexTest = "\w*\d?=?:? *(\d+.?\d+)"
+            research = re.search(regex, data)
 
-                #self.background = self.copy_from_bbox(self.axes.bbox)
-                #self.restore_region(self.background)
-                self.draw()
+            if self.drs[i].lock != None:
+                blocked = 1
+            #print(i)
+            #print(blocked)
+            if research is not None:
+                if len(research.group())>0 and blocked != 1:
+                    self.devices[i][11] = research.group(1)
+                    self.drs[i].value.set_text(research.group(1))
+                    self.axes.draw_artist(self.drs[i].value)
+                    self.draw()
+                # ANIMATION SOLUTION (BUGS A LOT)
+                # if self.drs[i].lock is None:
+                #     self.drs[i].value.set_animated(True)
+                #     self.drs[i].value.set_text(research.group(1))
+                    # self.background = self.copy_from_bbox(self.axes.bbox)
+                    # self.axes.draw_artist(self.drs[i].value)
+                    # print(self.drs[i].value.get_text())
+                    # self.restore_region(self.background)
+                    # self.blit(self.axes.bbox)
+                    # self.drs[i].value.set_animated(False)
+                    # self.draw()
 
-                #self.blit(self.axes.bbox)
 
 
             else:
