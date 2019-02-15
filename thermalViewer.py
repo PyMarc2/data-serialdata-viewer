@@ -3,6 +3,7 @@ import re
 from matplotlib import patches
 from matplotlib import text as mpltext
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog
@@ -152,7 +153,7 @@ class MplWidgetHandler(Canvas):
 
                 # Settings
                 self.dialog.setWindowTitle("Sensor {} Options".format(self.clickedIndex))
-                self.dialog.ui.comboBox_colorMap.addItems(['None', 'Viridis', 'Jet', 'Polar'])
+                self.dialog.ui.comboBox_colorMap.addItems(['None', 'viridis', 'jet', 'polar'])
                 self.loadRectangleOptions()
 
                 # Connections
@@ -224,7 +225,7 @@ class MplWidgetHandler(Canvas):
 
     # ===== LIVE RE DATA FETCHING FROM SERIAL ===== #
     def fetchFromSerial(self, data):
-        '''TODO: Implement fetchFromSerial function'''
+        '''TODO: Maybe segment this function in two... not sure'''
         #print("Initialization of regex evaluation")
         for i in range(len(self.devices)):
             blocked = 0
@@ -238,10 +239,15 @@ class MplWidgetHandler(Canvas):
             #print(blocked)
             if research is not None:
                 if len(research.group())>0 and blocked != 1:
-                    self.devices[i][11] = research.group(1)
-                    self.drs[i].value.set_text(research.group(1))
+                    val = research.group(1)
+                    self.devices[i][11] = val
+                    self.drs[i].value.set_text(val)
                     self.axes.draw_artist(self.drs[i].value)
                     self.draw()
+                    if self.devices[i][8] != 'None':
+                        self.updateRectangleColor(i, val)
+
+
                 # ANIMATION SOLUTION (BUGS A LOT)
                 # if self.drs[i].lock is None:
                 #     self.drs[i].value.set_animated(True)
@@ -254,8 +260,6 @@ class MplWidgetHandler(Canvas):
                     # self.drs[i].value.set_animated(False)
                     # self.draw()
 
-
-
             else:
                 print("bozo")
 
@@ -263,10 +267,13 @@ class MplWidgetHandler(Canvas):
         '''TODO: Implement updateRectangleValue function'''
         pass
 
-    def updateRectangleColor(self):
-        '''TODO: Implement updateRectanlgeColor function'''
-        pass
-
+    def updateRectangleColor(self, i, value):
+        cmx = self.devices[i][8]
+        cmo = cm.ScalarMappable()
+        cmo.set_clim(self.devices[i][9], self.devices[i][10])
+        cmo.set_cmap(cmx)
+        rgb = cmo.to_rgba(float(value))
+        self.drs[i].rect.set_color(rgb)
 
     # OLD FUNCTION THAT MIGHT BE REUSED IN THE FUTURE
     # def deleteRectangle(self, event):

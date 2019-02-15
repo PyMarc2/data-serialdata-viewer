@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 from matplotlib import text as mpltext
 import re
+from matplotlib import cm
 
 class DraggableRectangle:
     lock = None  # only one can be animated at a time
@@ -150,9 +151,20 @@ class MyFigure:
 # t.set_text('s')
 # print(t.get_text())
 
-data= "s4:24.55\ns3:344"
-express = "\w*\d?=?:? *(\d+.?\d+)"
-trouv = re.search(express, data)
+# data= "s4:24.55\ns3:344"
+# express = "\w*\d?=?:? *(\d+.?\d+)"
+# trouv = re.search(express, data)
+#
+# print(trouv, trouv.group(1))
 
-print(trouv, trouv.group(1))
+cmo = cm.ScalarMappable()
+cmo.set_clim(20, 25)
+cmo.set_cmap('viridis')
 
+liste = [20, 21, 22, 23, 24, 25, 26,27,28,29,30]
+
+rgb = cmo.to_rgba(liste, bytes=True)
+print(rgb)
+
+fig = plt.Figure()
+axes = fig.add_subplot(111)
