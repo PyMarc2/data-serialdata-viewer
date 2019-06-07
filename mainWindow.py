@@ -52,33 +52,6 @@ class MainWindow(QWidget, Ui_ViewerWidget):
         # GRAPHICAL CONNECTIONS
         self.resized.connect(self.updateSizePosition)
 
-        # COLOR SELECTION SETTINGS
-        color_dict = {
-            'red': '#ff0000',
-            'green': '#00ff00',
-            'blue': '#0000ff',
-            'yellow': '#ffff00',
-            'gold': '#ffd700',
-            'pink': '#ffc0cb',
-            'bisque': '#ffe4c4',
-            'ivory': '#fffff0',
-            'black': '#000000',
-            'white': '#ffffff',
-            'violet': '#ee82ee',
-            'silver': '#c0c0c0',
-            'forestgreen': '#228b22',
-            'brown': '#a52a3a',
-            'chocolate': '#d2691e',
-            'azure': '#fffff0',
-            'orange': '#ffa500'
-        }
-        self.comboBox_minColor.addItems(color_dict)
-        self.comboBox_maxColor.addItems(color_dict)
-        self.comboBox_minColor.currentTextChanged.connect(self.updateColors)
-        self.comboBox_maxColor.currentTextChanged.connect(self.updateColors)
-        self.lineEdit_minColor.returnPressed.connect(self.updateColors)
-        self.lineEdit_maxColor.returnPressed.connect(self.updateColors)
-
         # INITIALISATION SERIAL COMMUNICATION
         self.scanPorts()
 

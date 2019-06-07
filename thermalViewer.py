@@ -128,7 +128,7 @@ class MplWidgetHandler(Canvas):
             if self.devicesNumber - placed != 0:
                 rect = self.axes.add_artist(patches.Rectangle((sensor[2][0], sensor[2][1]), sensor[3], sensor[4], edgecolor='black', facecolor='black', fill=True))
                 placed = placed + 1
-                dr = DraggableRectangle(rect, self)
+                dr = DraggableRectangle(rect, sensor[0], sensor[1], self)
                 dr.connect()
                 self.drs.append(dr)
                 self.fig.canvas.draw()
