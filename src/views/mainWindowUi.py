@@ -168,4 +168,4 @@ class Ui_ViewerWidget(object):
         self.pushButton_saveTerminal.setText(_translate("ViewerWidget", "Save"))
         self.pushButton_clearTerminal.setText(_translate("ViewerWidget", "Clear"))
 
-from mplWidget import MplWidget
+from src.mplWidget import MplWidget

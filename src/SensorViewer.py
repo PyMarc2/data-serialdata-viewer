@@ -8,13 +8,13 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QMessageBox
-from sensorWindowUi import Ui_Dialog
+from src.views.sensorOptionsDialogUi import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
-from draggableRectangle import DraggableRectangle
+from src.draggableRectangle import DraggableRectangle
 matplotlib.use('QT5Agg')
 
 
-class MplWidgetHandler(Canvas):
+class SensorViewer(Canvas):
     def __init__(self):
         self.dialog = None
         # SET FIGURE OPTIONS

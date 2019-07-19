@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-from PyQt5.QtCore import QSize, Qt, QTimer, QThreadPool, pyqtSignal, QTime
-from threadWorker import Worker
+from PyQt5.QtCore import QThreadPool
+from src.tools.threadWorker import Worker
 from PyQt5 import QtCore
-from mainWindowUi import Ui_ViewerWidget
+from src.views.mainWindowUi import Ui_ViewerWidget
 #import serialMock as serial
 import serial
 import sys
